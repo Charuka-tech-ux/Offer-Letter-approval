@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Showroom Approval System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #333;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #777;
+        }
+
+        .card {
+            margin-top: 2rem;
+            padding: 2rem;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .input-group-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 1.5rem;
+        }
+
+        .input-group {
+            width: 48%;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .input-group input,
+        .input-group select,
+        .input-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .button-group {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .button-group button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0.5rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .save {
+            background-color: #008cba;
+            color: white;
+        }
+
+        .clear {
+            background-color: #f44336;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        .search-bar {
+            margin-bottom: 1rem;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+        }
+
+        .approval-button {
+            width: 60px;
+            height: 30px;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Showroom Approval System</h1>
+            <p>Efficiently manage showroom approvals and deletions</p>
+        </div>
+
+        <div class="card">
+            <h2>New Showroom Entry</h2>
+            <div class="input-group-container">
+                <div class="input-group">
+                    <label>Type</label>
+                    <select id="locationType" required>
+                        <option value="">Select Type</option>
+                        <option value="New Location">New Location</option>
+                        <option value="Renewal">Renewal</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Showroom Name</label>
+                    <input type="text" id="showroomName" placeholder="Enter showroom name" required>
+                </div>
+            </div>
+
+            <div class="input-group-container">
+                <div class="input-group">
+                    <label>Monthly Rent (Rs.)</label>
+                    <input type="number" id="rent" placeholder="Enter monthly rent" required>
+                </div>
+                <div class="input-group">
+                    <label>Size (sq ft)</label>
+                    <input type="number" id="size" placeholder="Enter showroom size" required>
+                </div>
+            </div>
+
+            <div class="input-group-container">
+                <div class="input-group">
+                    <label>Additional Details</label>
+                    <textarea id="comments" placeholder="Enter additional details or comments"></textarea>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button onclick="addShowroomDetails()" class="save">Save New Showroom</button>
+                <button onclick="clearForm()" class="clear">Clear Form</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Approval Table</h3>
+            <div class="search-bar">
+                <input type="text" id="searchBar" placeholder="Search saved details..." oninput="filterTable()">
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Showroom Name</th>
+                        <th>Rent</th>
+                        <th>Size</th>
+                        <th>Comments</th>
+                        <th>GM Status</th>
+                        <th>CEO Status</th>
+                        <th>CFO Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="approvalTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let approvalData = [];
+
+        function addShowroomDetails() {
+            const formData = {
+                locationType: document.getElementById('locationType').value,
+                showroomName: document.getElementById('showroomName').value,
+                rent: document.getElementById('rent').value,
+                size: document.getElementById('size').value,
+                comments: document.getElementById('comments').value,
+            };
+
+            if (!formData.showroomName || !formData.rent || !formData.size || !formData.locationType) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const newEntry = {
+                ...formData,
+                GMStatus: 'Pending',
+                CEOStatus: 'Pending',
+                CFOStatus: 'Pending',
+            };
+
+            approvalData.push(newEntry);
+            updateTable();
+        }
+
+        function filterTable() {
+            const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+            const tableBody = document.getElementById('approvalTableBody');
+            tableBody.innerHTML = '';
+
+            approvalData
+                .filter(entry =>
+                    Object.values(entry).some(value =>
+                        String(value).toLowerCase().includes(searchTerm)
+                    )
+                )
+                .forEach(entry => appendRow(entry));
+        }
+
+        function updateTable() {
+            const tableBody = document.getElementById('approvalTableBody');
+            tableBody.innerHTML = '';
+            approvalData.forEach((entry, index) => appendRow(entry, index));
+        }
+
+        function appendRow(entry, index) {
+            const tableBody = document.getElementById('approvalTableBody');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${entry.locationType}</td>
+                <td>${entry.showroomName}</td>
+                <td>Rs. ${Number(entry.rent).toLocaleString()}</td>
+                <td>${entry.size} sq ft</td>
+                <td>${entry.comments}</td>
+                <td class="status-${entry.GMStatus.toLowerCase()}">${entry.GMStatus} <button class="approval-button" onclick="approveGM(${index})">Approve</button></td>
+                <td class="status-${entry.CEOStatus.toLowerCase()}">${entry.CEOStatus} <button class="approval-button" onclick="approveCEO(${index})">Approve</button></td>
+                <td class="status-${entry.CFOStatus.toLowerCase()}">${entry.CFOStatus} <button class="approval-button" onclick="approveCFO(${index})">Approve</button></td>
+                <td>
+                    <button onclick="editEntry(${index})">Edit</button>
+                    <button onclick="deleteEntry(${index})">Delete</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        }
+
+        function deleteEntry(index) {
+            approvalData.splice(index, 1);
+            updateTable();
+        }
+
+        function editEntry(index) {
+            const entry = approvalData[index];
+            document.getElementById('showroomName').value = entry.showroomName;
+            document.getElementById('locationType').value = entry.locationType;
+            document.getElementById('rent').value = entry.rent;
+            document.getElementById('size').value = entry.size;
+            document.getElementById('comments').value = entry.comments;
+
+            approvalData.splice(index, 1);
+            updateTable();
+        }
+
+        function approveGM(index) {
+            approvalData[index].GMStatus = 'Approved';
+            updateTable();
+        }
+
+        function approveCEO(index) {
+            approvalData[index].CEOStatus = 'Approved';
+            updateTable();
+        }
+
+        function approveCFO(index) {
+            approvalData[index].CFOStatus = 'Approved';
+            updateTable();
+        }
+
+        // Function to clear the form
+        function clearForm() {
+            document.getElementById('locationType').value = '';
+            document.getElementById('showroomName').value = '';
+            document.getElementById('rent').value = '';
+            document.getElementById('size').value = '';
+            document.getElementById('comments').value = '';
+        }
+    </script>
+</body>
+</html>
